@@ -1,0 +1,96 @@
+# Jupyter notebooks
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specific
+outputs/*/
+!outputs/.gitkeep
+input_pdfs/*
+!input_pdfs/.gitkeep
+*.log
+*.tmp
+
+# Docker
+.dockerignore
+
+# Chunkr workspace
+chunkr_workspace/
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+*.temp
+
+# Large files
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.tiff
+*.bmp
+
+# Configuration with secrets
+.env
+*_secrets.yml
+*_private.json
+
+# Model files
+*.bin
+*.model
+*.pkl
+*.h5
+*.onnx
+
+# Backup files
+*.bak
+*.backup
+*~

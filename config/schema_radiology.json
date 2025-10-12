@@ -1,0 +1,41 @@
+{
+  "report_type": "radiology",
+  "patient": {
+    "name": "",
+    "age": "",
+    "sex": "",
+    "id": "",
+    "date": "",
+    "contact": "",
+    "address": ""
+  },
+  "doctor": {
+    "name": "",
+    "registration_no": "",
+    "qualification": "",
+    "clinic": "",
+    "contact": "",
+    "address": ""
+  },
+  "report_details": {
+    "study_date": "",
+    "acceptance_date": "",
+    "reporting_date": "",
+    "specimen_type": "",
+    "clinical_details": ""
+  },
+  "findings": {
+    "gross": "",
+    "microscopy": "",
+    "impression": "",
+    "results": []
+  },
+  "tests": [],
+  "investigations": [],
+  "advice": "",
+  "metadata": {
+    "pages": 0,
+    "sources": [],
+    "languages": []
+  }
+}

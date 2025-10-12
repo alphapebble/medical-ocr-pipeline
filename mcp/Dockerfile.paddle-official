@@ -1,0 +1,20 @@
+# Custom x86_64 OCR Server on Official PaddlePaddle 3.2.0 (amd64)
+FROM paddlepaddle/paddle:3.2.0
+
+WORKDIR /paddle
+
+# Faster installs; keep it minimal
+ENV PIP_NO_CACHE_DIR=1
+RUN python -m pip install --upgrade pip \
+ && pip install paddleocr "numpy<2.0" fastmcp fastapi uvicorn[standard]
+
+COPY mcp_ocr_paddle.py .
+
+# Stability knobs (help with MKLDNN/threads on tiny VMs)
+ENV OMP_NUM_THREADS=1 \
+    FLAGS_use_mkldnn=false \
+    OPENBLAS_NUM_THREADS=1 \
+    MKL_NUM_THREADS=1
+
+EXPOSE 8090
+CMD ["uvicorn", "mcp_ocr_paddle:app", "--host", "0.0.0.0", "--port", "8090"]
