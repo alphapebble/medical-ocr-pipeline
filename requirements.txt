@@ -27,6 +27,10 @@ langchain>=0.1.0
 langchain-community>=0.0.1
 langchain-ollama>=0.1.0
 
+# DSPy for prompt optimization
+dspy-ai>=2.4.0
+jsonschema>=4.0.0
+
 # ML and scientific computing
 scikit-learn>=1.0.0
 matplotlib>=3.5.0
@@ -47,6 +51,25 @@ tqdm>=4.64.0
 # Medical NLP (optional)
 # quickumls  # Uncomment if using QuickUMLS
 # en_core_sci_lg @ https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.5.1/en_core_sci_lg-0.5.1.tar.gz
+
+# Enhanced pipeline additions (DSPy + Mistral + Premium OCR)
+# Medical domain enhancements
+medspacy>=1.0.0
+clinical-nlp>=0.3.0
+
+# Performance optimization
+faiss-cpu>=1.7.0
+numba>=0.57.0
+
+# Monitoring and evaluation (optional)
+wandb>=0.15.0
+mlflow>=2.0.0
+prometheus-client>=0.16.0
+
+# Premium OCR tools (optional - for complex medical documents)
+# marker-pdf[full]>=1.10.0  # Uncomment for advanced PDF processing
+# ocrmypdf>=16.0.0  # Uncomment for PDF preprocessing
+# surya-ocr>=0.4.0  # Uncomment for premium OCR accuracy
 
 # Development and testing
 pytest>=7.0.0

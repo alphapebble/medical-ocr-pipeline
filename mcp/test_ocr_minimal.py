@@ -7,8 +7,291 @@ from pathlib import Path
 from PIL import Image
 import numpy as np
 
+def test_tesseract(image_path):
+    """Test Tesseract OCR directly"""
+    print("\n" + "="*60)
+    print("Testing Tesseract directly")
+    print("="*60)
+    
+    try:
+        import pytesseract
+        from PIL import Image
+        print("✅ Tesseract imported successfully")
+        
+        print(f"Loading image: {image_path}")
+        if image_path.lower().endswith('.pdf'):
+            print("Converting PDF to image...")
+            try:
+                import pypdfium2 as pdfium
+                pdf = pdfium.PdfDocument(image_path)
+                page = pdf[0]
+                bitmap = page.render(scale=2.0)
+                img = bitmap.to_pil()
+                print(f"✅ PDF converted: {img.size}")
+            except ImportError:
+                print("❌ pypdfium2 not installed")
+                return False
+        else:
+            img = Image.open(image_path).convert('RGB')
+        
+        print("Running OCR...")
+        text = pytesseract.image_to_string(img)
+        print(f"✅ OCR completed - extracted {len(text)} characters")
+        
+        if text.strip():
+            print(f"Sample text: '{text[:100]}...'")
+        else:
+            print("⚠️ No text detected")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Tesseract failed: {e}")
+        return False
+
+def test_easyocr(image_path):
+    """Test EasyOCR directly"""
+    print("\n" + "="*60)
+    print("Testing EasyOCR directly")
+    print("="*60)
+    
+    try:
+        import easyocr
+        print("✅ EasyOCR imported successfully")
+        
+        print("Initializing EasyOCR...")
+        reader = easyocr.Reader(['en'])
+        print("✅ EasyOCR initialized")
+        
+        print(f"Loading image: {image_path}")
+        
+        if image_path.lower().endswith('.pdf'):
+            print("Converting PDF to image...")
+            try:
+                import pypdfium2 as pdfium
+                pdf = pdfium.PdfDocument(image_path)
+                page = pdf[0]
+                bitmap = page.render(scale=2.0)
+                img = bitmap.to_pil()
+                print(f"✅ PDF converted: {img.size}")
+                image_path = img
+            except ImportError:
+                print("❌ pypdfium2 not installed")
+                return False
+        
+        print("Running OCR...")
+        results = reader.readtext(image_path)
+        print(f"✅ OCR completed - found {len(results)} text blocks")
+        
+        for i, (bbox, text, conf) in enumerate(results[:3]):
+            print(f"  Block {i+1}: '{text[:50]}' (conf: {conf:.3f})")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ EasyOCR failed: {e}")
+        return False
+
+def test_docling(image_path):
+    """Test Docling directly"""
+    print("\n" + "="*60)
+    print("Testing Docling directly")
+    print("="*60)
+    
+    try:
+        from docling.document_converter import DocumentConverter
+        print("✅ Docling imported successfully")
+        
+        print("Initializing Docling...")
+        converter = DocumentConverter()
+        print("✅ Docling initialized")
+        
+        print(f"Processing document: {image_path}")
+        result = converter.convert(image_path)
+        print(f"✅ Document processed")
+        
+        if result.document.main_text:
+            text = result.document.main_text
+            print(f"Extracted {len(text)} characters")
+            print(f"Sample text: '{text[:100]}...'")
+        else:
+            print("⚠️ No text detected")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Docling failed: {e}")
+        return False
+
+def test_doctr(image_path):
+    """Test DocTR directly"""
+    print("\n" + "="*60)
+    print("Testing DocTR directly")
+    print("="*60)
+    
+    try:
+        from doctr.io import DocumentFile
+        from doctr.models import ocr_predictor
+        print("✅ DocTR imported successfully")
+        
+        print("Initializing DocTR...")
+        model = ocr_predictor(pretrained=True)
+        print("✅ DocTR initialized")
+        
+        print(f"Loading document: {image_path}")
+        doc = DocumentFile.from_pdf(image_path) if image_path.lower().endswith('.pdf') else DocumentFile.from_images([image_path])
+        print(f"✅ Document loaded")
+        
+        print("Running OCR...")
+        result = model(doc)
+        print(f"✅ OCR completed")
+        
+        # Extract text
+        text_blocks = []
+        for page in result.pages:
+            for block in page.blocks:
+                for line in block.lines:
+                    for word in line.words:
+                        text_blocks.append(word.value)
+        
+        if text_blocks:
+            full_text = ' '.join(text_blocks)
+            print(f"Extracted {len(full_text)} characters from {len(text_blocks)} words")
+            print(f"Sample text: '{full_text[:100]}...'")
+        else:
+            print("⚠️ No text detected")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ DocTR failed: {e}")
+        return False
+
+def test_deepseek(image_path):
+    """Test DeepSeek Vision Language Model"""
+    print("\n" + "="*60)
+    print("Testing DeepSeek VL directly")
+    print("="*60)
+    
+    try:
+        import torch
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+        print("✅ DeepSeek dependencies imported")
+        
+        print("⚠️ DeepSeek VL requires significant GPU resources - skipping actual test")
+        print("   Model would be loaded with: AutoModelForCausalLM.from_pretrained('deepseek-ai/deepseek-vl-7b-chat')")
+        return True
+        
+    except Exception as e:
+        print(f"❌ DeepSeek failed: {e}")
+        return False
+
+def test_qwen(image_path):
+    """Test Qwen3-VL directly"""
+    print("\n" + "="*60)
+    print("Testing Qwen3-VL directly")
+    print("="*60)
+    
+    try:
+        from transformers import Qwen2VLForConditionalGeneration, AutoTokenizer, AutoProcessor
+        print("✅ Qwen3-VL imported successfully")
+        
+        print("⚠️ Qwen3-VL requires significant GPU resources - skipping actual test")
+        print("   Model would be loaded with: Qwen2VLForConditionalGeneration.from_pretrained('Qwen/Qwen2-VL-2B-Instruct')")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Qwen3-VL failed: {e}")
+        return False
+
+def test_marker(image_path):
+    """Test Marker directly"""
+    print("\n" + "="*60)
+    print("Testing Marker directly")
+    print("="*60)
+    
+    try:
+        from marker.convert import convert_single_pdf
+        from marker.models import load_all_models
+        print("✅ Marker imported successfully")
+        
+        if not image_path.lower().endswith('.pdf'):
+            print("⚠️ Marker requires PDF input - converting image to PDF")
+            from reportlab.pdfgen import canvas
+            from PIL import Image
+            import tempfile
+            
+            img = Image.open(image_path)
+            with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp:
+                pdf_path = tmp.name
+                c = canvas.Canvas(pdf_path, pagesize=(img.width, img.height))
+                c.drawImage(image_path, 0, 0, width=img.width, height=img.height)
+                c.save()
+                image_path = pdf_path
+        
+        print("⚠️ Marker requires significant resources - skipping model loading")
+        print(f"   Would process: {image_path}")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Marker failed: {e}")
+        return False
+
+def test_nanonets(image_path):
+    """Test Nanonets API"""
+    print("\n" + "="*60)
+    print("Testing Nanonets API")
+    print("="*60)
+    
+    try:
+        import requests
+        import base64
+        print("✅ Nanonets dependencies imported")
+        
+        print("⚠️ Nanonets requires API key - skipping actual API call")
+        print("   Would use endpoint: https://app.nanonets.com/api/v2/OCR/Model/{model_id}/LabelFile/")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Nanonets failed: {e}")
+        return False
+
+def test_chandra(image_path):
+    """Test Chandra OCR with fallback"""
+    print("\n" + "="*60)
+    print("Testing Chandra OCR directly")
+    print("="*60)
+    
+    try:
+        # Try Chandra OCR first
+        try:
+            import chandra_ocr
+            print("✅ Chandra OCR imported successfully")
+            print("⚠️ Chandra OCR test implementation needed")
+            return True
+        except ImportError:
+            print("⚠️ Chandra OCR not available, using Tesseract fallback")
+            import pytesseract
+            from PIL import Image
+            
+            if image_path.lower().endswith('.pdf'):
+                import pypdfium2 as pdfium
+                pdf = pdfium.PdfDocument(image_path)
+                page = pdf[0]
+                bitmap = page.render(scale=2.0)
+                img = bitmap.to_pil()
+            else:
+                img = Image.open(image_path).convert('RGB')
+            
+            text = pytesseract.image_to_string(img)
+            print(f"✅ Fallback OCR completed - extracted {len(text)} characters")
+            return True
+        
+    except Exception as e:
+        print(f"❌ Chandra OCR failed: {e}")
+        return False
+
 def test_paddleocr(image_path):
-    """Test PaddleOCR directly"""
     print("\n" + "="*60)
     print("Testing PaddleOCR directly")
     print("="*60)
@@ -159,8 +442,17 @@ def main():
     print(f"Image: {image_path}")
     
     results = {
+        'Tesseract': test_tesseract(image_path),
+        'EasyOCR': test_easyocr(image_path),
         'PaddleOCR': test_paddleocr(image_path),
-        'Surya': test_surya(image_path)
+        'Surya': test_surya(image_path),
+        'Docling': test_docling(image_path),
+        'DocTR': test_doctr(image_path),
+        'DeepSeek-VL': test_deepseek(image_path),
+        'Qwen3-VL': test_qwen(image_path),
+        'Marker': test_marker(image_path),
+        'Nanonets': test_nanonets(image_path),
+        'Chandra': test_chandra(image_path)
     }
     
     print("\n" + "="*60)

@@ -1,0 +1,30 @@
+# Dockerfile for Chandra OCR MCP Service
+FROM python:3.11-slim
+
+# Install system dependencies for Tesseract (fallback)
+RUN apt-get update && apt-get install -y \
+    tesseract-ocr \
+    tesseract-ocr-eng \
+    libtesseract-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements and install Python dependencies
+COPY docker/requirements-chandra.txt .
+RUN pip install --no-cache-dir -r requirements-chandra.txt
+
+# Copy MCP server script
+COPY mcp/mcp_ocr_chandra.py .
+
+# Expose port
+EXPOSE 8099
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8099/health || exit 1
+
+# Run the server
+CMD ["python", "mcp_ocr_chandra.py"]

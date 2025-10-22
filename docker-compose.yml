@@ -1,0 +1,220 @@
+# Docker Compose for MCP OCR Services
+version: '3.8'
+
+services:
+  mcp-tesseract:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.tesseract
+    ports:
+      - "8089:8089"
+    environment:
+      - OCR_ENGINE=tesseract
+      - PORT=8089
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8089/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  mcp-easyocr:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.easyocr
+    ports:
+      - "8092:8092"
+    environment:
+      - OCR_ENGINE=easyocr
+      - PORT=8092
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8092/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  mcp-paddle:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.paddle
+    ports:
+      - "8090:8090"
+    environment:
+      - OCR_ENGINE=paddle
+      - PORT=8090
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  mcp-surya:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.surya
+    ports:
+      - "8091:8091"
+    environment:
+      - OCR_ENGINE=surya
+      - PORT=8091
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8091/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  mcp-docling:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.docling
+    ports:
+      - "8093:8093"
+    environment:
+      - OCR_ENGINE=docling
+      - PORT=8093
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8093/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  mcp-doctr:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.doctr
+    ports:
+      - "8094:8094"
+    environment:
+      - OCR_ENGINE=doctr
+      - PORT=8094
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8094/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  mcp-deepseek:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.deepseek
+    ports:
+      - "8095:8095"
+    environment:
+      - OCR_ENGINE=deepseek
+      - PORT=8095
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8095/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  mcp-qwen:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.qwen
+    ports:
+      - "8096:8096"
+    environment:
+      - OCR_ENGINE=qwen
+      - PORT=8096
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8096/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  mcp-marker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.marker
+    ports:
+      - "8097:8097"
+    environment:
+      - OCR_ENGINE=marker
+      - PORT=8097
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8097/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  mcp-nanonets:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.nanonets
+    ports:
+      - "8098:8098"
+    environment:
+      - OCR_ENGINE=nanonets
+      - PORT=8098
+      - NANONETS_API_KEY=${NANONETS_API_KEY}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8098/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  mcp-chandra:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.chandra
+    ports:
+      - "8099:8099"
+    environment:
+      - OCR_ENGINE=chandra
+      - PORT=8099
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8099/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # OCR Pipeline Runner
+  pipeline-runner:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.pipeline
+    depends_on:
+      - mcp-tesseract
+      - mcp-easyocr
+      - mcp-paddle
+      - mcp-surya
+      - mcp-docling
+      - mcp-doctr
+      - mcp-deepseek
+      - mcp-qwen
+      - mcp-marker
+      - mcp-nanonets
+      - mcp-chandra
+    volumes:
+      - ./input_pdfs:/app/input_pdfs
+      - ./outputs:/app/outputs
+      - ./config:/app/config
+    environment:
+      - TESSERACT_URL=http://mcp-tesseract:8089
+      - EASYOCR_URL=http://mcp-easyocr:8092
+      - PADDLE_URL=http://mcp-paddle:8090
+      - SURYA_URL=http://mcp-surya:8091
+      - DOCLING_URL=http://mcp-docling:8093
+      - DOCTR_URL=http://mcp-doctr:8094
+      - DEEPSEEK_URL=http://mcp-deepseek:8095
+      - QWEN_URL=http://mcp-qwen:8096
+      - MARKER_URL=http://mcp-marker:8097
+      - NANONETS_URL=http://mcp-nanonets:8098
+      - CHANDRA_URL=http://mcp-chandra:8099
+      - MEDICAL_DOMAIN=prescription
+    # Remove the command to prevent auto-run, use exec instead
+
+networks:
+  default:
+    name: medical-ocr-network

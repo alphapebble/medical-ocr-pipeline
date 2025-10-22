@@ -1,0 +1,37 @@
+# Dockerfile for Medical OCR Pipeline Runner
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# Create necessary directories
+RUN mkdir -p input_pdfs outputs config
+
+# Expose port (if needed for API)
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV TESSERACT_URL=http://mcp-tesseract:8089
+ENV EASYOCR_URL=http://mcp-easyocr:8092
+ENV PADDLE_URL=http://mcp-paddle:8090
+ENV SURYA_URL=http://mcp-surya:8091
+
+# Run the pipeline
+CMD ["python", "scripts/run_pipeline.py"]

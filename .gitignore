@@ -94,3 +94,8 @@ tmp/
 *.bak
 *.backup
 *~
+notebooks/qa_evaluation/metrics/run_001_detailed_metrics.csv
+notebooks/qa_evaluation/metrics/run_mcp_detailed_metrics.csv
+notebooks/qa_evaluation/reports/run_001_evaluation_report.html
+notebooks/qa_evaluation/reports/run_mcp_evaluation_report.html
+docs/QA_INTEGRATION_GUIDE.md

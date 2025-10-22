@@ -11,6 +11,7 @@ import os
 import time
 import json
 import traceback
+import torch
 
 app = FastAPI(title="MCP OCR - Surya", version="1.1.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -74,92 +75,118 @@ def get_predictors():
         print(f"[ERROR] Failed to load Surya OCR: {traceback.format_exc()}")
         raise RuntimeError(f"Failed to load Surya OCR: {e}")
 
-def parse_surya_output(predictions, img_w, img_h):
-    """Parse Surya predictions into line-level blocks, grouping nearby detections for better table/image handling."""
-    blocks = []
-    if not predictions or len(predictions) == 0:
-        return blocks
-    
-    pred = predictions[0]  # First image result
-    
-    # pred.text_lines: list of TextLine objects
-    detections = []
-    if hasattr(pred, 'text_lines'):
-        for line in pred.text_lines:
-            txt = line.text.strip() if hasattr(line, 'text') else str(line).strip()
-            if not txt:
-                continue
-            
-            conf = float(line.confidence) if hasattr(line, 'confidence') else 1.0
-            
-            # Get bounding box - try bbox first, then polygon
-            box = None
-            if hasattr(line, 'bbox') and line.bbox is not None:
-                bbox = line.bbox
-                # bbox should be [x1, y1, x2, y2] or tensor
+def parse_surya_output(predictions, img_w, img_h, y_tol=10):
+    """Parse Surya predictions into line-level blocks, grouping nearby detections."""
+    import math
+
+    def to_box(line):
+        # Return [x0,y0,x1,y1] or None
+        bbox = getattr(line, "bbox", None)
+        if bbox is not None:
+            try:
                 if isinstance(bbox, torch.Tensor):
                     bbox = bbox.tolist()
-                box = [float(bbox[0]), float(bbox[1]), float(bbox[2]), float(bbox[3])]
-            elif hasattr(line, 'polygon') and line.polygon is not None:
-                # polygon is [(x1,y1), (x2,y2), (x3,y3), (x4,y4)] or tensor
-                poly = line.polygon
+                return [float(bbox[0]), float(bbox[1]), float(bbox[2]), float(bbox[3])]
+            except Exception:
+                pass
+        poly = getattr(line, "polygon", None)
+        if poly is not None:
+            try:
                 if isinstance(poly, torch.Tensor):
                     poly = poly.tolist()
-                xs = [p[0] for p in poly]
-                ys = [p[1] for p in poly]
-                box = [min(xs), min(ys), max(xs), max(ys)]
-            
-            # Normalize confidence to 0-1 range
-            if conf > 1.0:
-                conf = conf / 100.0
-            
-            if box:
-                detections.append({'bbox': box, 'text': txt, 'conf': conf})
-    
-    # Sort by y-coordinate for line grouping (helps with table rows)
-    detections.sort(key=lambda x: x['bbox'][1])
-    
-    # Group into pseudo-lines (within 10px vertical tolerance) for mixed content
+                xs = [float(p[0]) for p in poly]
+                ys = [float(p[1]) for p in poly]
+                return [min(xs), min(ys), max(xs), max(ys)]
+            except Exception:
+                pass
+        return None
+
+    blocks = []
+    if not predictions:
+        return blocks
+
+    pred = predictions[0]
+    text_lines = getattr(pred, "text_lines", None)
+    if not text_lines:
+        return blocks
+
+    # Collect detections
+    dets = []
+    for line in text_lines:
+        txt = (getattr(line, "text", "") or "").strip()
+        if not txt:
+            continue
+        conf = getattr(line, "confidence", 1.0)
+        try:
+            conf = float(conf)
+        except Exception:
+            conf = 1.0
+        if conf > 1.0:
+            conf /= 100.0
+        conf = max(0.0, min(1.0, conf))
+
+        box = to_box(line)
+        if not box:
+            continue
+
+        x0, y0, x1, y1 = box
+        if not (math.isfinite(x0) and math.isfinite(y0) and math.isfinite(x1) and math.isfinite(y1)):
+            continue
+        if x1 <= x0 or y1 <= y0:
+            continue
+
+        dets.append({"bbox": [x0, y0, x1, y1], "text": txt, "conf": conf})
+
+    if not dets:
+        return blocks
+
+    # Sort by top y, then x
+    dets.sort(key=lambda d: (round(d["bbox"][1], 1), round(d["bbox"][0], 1)))
+
+    # Group into lines using a stable reference y for the current line
     current_line = []
-    for det in detections:
-        y0 = det['bbox'][1]
-        if current_line and abs(y0 - current_line[-1]['y0']) <= 10:
+    current_y = None  # reference y for the current line
+
+    for det in dets:
+        y0 = det["bbox"][1]
+        if current_line and current_y is not None and abs(y0 - current_y) <= y_tol:
             current_line.append(det)
+            # keep current_y unchanged to maintain band stability
         else:
-            # Flush current line
+            # flush current line
             if current_line:
-                # Aggregate line: avg conf, union bbox, joined text
-                texts = [item['text'] for item in current_line]
-                confs = [item['conf'] for item in current_line]
-                all_bboxes = [item['bbox'] for item in current_line]
-                union_x0 = min(b[0] for b in all_bboxes)
-                union_y0 = min(b[1] for b in all_bboxes)
-                union_x1 = max(b[2] for b in all_bboxes)
-                union_y1 = max(b[3] for b in all_bboxes)
+                texts = [d["text"] for d in current_line]
+                confs = [d["conf"] for d in current_line]
+                xs0 = [d["bbox"][0] for d in current_line]
+                ys0 = [d["bbox"][1] for d in current_line]
+                xs1 = [d["bbox"][2] for d in current_line]
+                ys1 = [d["bbox"][3] for d in current_line]
                 blocks.append({
-                    "text": " ".join(texts),
-                    "confidence": sum(confs) / len(confs),
-                    "bbox": [union_x0, union_y0, union_x1, union_y1]
+                    "text": " ".join(texts).strip(),
+                    "confidence": (sum(confs) / len(confs)) if confs else 0.0,
+                    "bbox": [min(xs0), min(ys0), max(xs1), max(ys1)]
                 })
+            # start new line
             current_line = [det]
-            current_line[-1]['y0'] = y0  # Store for grouping
-    
-    # Flush last line
+            current_y = y0
+
+    # flush last line
     if current_line:
-        texts = [item['text'] for item in current_line]
-        confs = [item['conf'] for item in current_line]
-        all_bboxes = [item['bbox'] for item in current_line]
-        union_x0 = min(b[0] for b in all_bboxes)
-        union_y0 = min(b[1] for b in all_bboxes)
-        union_x1 = max(b[2] for b in all_bboxes)
-        union_y1 = max(b[3] for b in all_bboxes)
+        texts = [d["text"] for d in current_line]
+        confs = [d["conf"] for d in current_line]
+        xs0 = [d["bbox"][0] for d in current_line]
+        ys0 = [d["bbox"][1] for d in current_line]
+        xs1 = [d["bbox"][2] for d in current_line]
+        ys1 = [d["bbox"][3] for d in current_line]
         blocks.append({
-            "text": " ".join(texts),
-            "confidence": sum(confs) / len(confs),
-            "bbox": [union_x0, union_y0, union_x1, union_y1]
+            "text": " ".join(texts).strip(),
+            "confidence": (sum(confs) / len(confs)) if confs else 0.0,
+            "bbox": [min(xs0), min(ys0), max(xs1), max(ys1)]
         })
-    
-    return sorted(blocks, key=lambda b: b['bbox'][1])  # Sort by y for reading order
+
+    # Keep your original return (reading order by top y)
+    return sorted(blocks, key=lambda b: b['bbox'][1])
+
 
 @app.get("/health")
 async def health():
