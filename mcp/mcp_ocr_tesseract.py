@@ -40,7 +40,7 @@ def parse_tess_output(d, img_w, img_h):
     current_line = []
     for det in detections:
         y0 = det['bbox'][1]
-        if current_line and abs(y0 - current_line[-1]['y0']) <= 10:
+        if current_line and abs(y0 - current_line[-1]['bbox'][1]) <= 10:
             current_line.append(det)
         else:
             # Flush current line

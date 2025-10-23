@@ -19,7 +19,9 @@ SERVICES = {
     'qwen': 8096,
     'marker': 8097,
     'nanonets': 8098,
-    'chandra': 8099
+    'chandra': 8099,
+    'olmo': 8100,
+    'dots': 8101
 }
 
 def check_service_health(service_name: str, port: int, timeout: int = 5) -> Dict:
@@ -71,7 +73,7 @@ def check_all_services(services: Dict[str, int], timeout: int = 5) -> List[Dict]
     """Check health of all services"""
     results = []
     
-    print("🔍 Checking MCP OCR Service Health")
+    print("Checking MCP OCR Service Health")
     print("=" * 50)
     
     for service_name, port in services.items():
@@ -79,15 +81,15 @@ def check_all_services(services: Dict[str, int], timeout: int = 5) -> List[Dict]
         result = check_service_health(service_name, port, timeout)
         
         if result['status'] == 'healthy':
-            print(f"✅ HEALTHY ({result['response_time']:.3f}s)")
+            print(f"HEALTHY ({result['response_time']:.3f}s)")
         elif result['status'] == 'unhealthy':
-            print(f"⚠️  UNHEALTHY - {result['error']}")
+            print(f"UNHEALTHY - {result['error']}")
         elif result['status'] == 'unreachable':
-            print(f"❌ UNREACHABLE - {result['error']}")
+            print(f"UNREACHABLE - {result['error']}")
         elif result['status'] == 'timeout':
-            print(f"⏰ TIMEOUT - {result['error']}")
+            print(f"TIMEOUT - {result['error']}")
         else:
-            print(f"💥 ERROR - {result['error']}")
+            print(f"ERROR - {result['error']}")
         
         results.append(result)
     
@@ -107,22 +109,22 @@ def print_summary(results: List[Dict]):
     print(f"Unhealthy: {len(unhealthy)}")
     
     if healthy:
-        print(f"\n✅ Healthy services ({len(healthy)}):")
+        print(f"\nHealthy services ({len(healthy)}):")
         for result in healthy:
             rt = result.get('response_time', 0)
             print(f"   {result['service']:12s} - port {result['port']} ({rt:.3f}s)")
     
     if unhealthy:
-        print(f"\n❌ Unhealthy services ({len(unhealthy)}):")
+        print(f"\nUnhealthy services ({len(unhealthy)}):")
         for result in unhealthy:
             error = result.get('error', 'Unknown error')
             print(f"   {result['service']:12s} - port {result['port']} - {error}")
     
-    print(f"\nOverall status: {'✅ ALL HEALTHY' if len(unhealthy) == 0 else '❌ SOME UNHEALTHY'}")
+    print(f"\nOverall status: {'ALL HEALTHY' if len(unhealthy) == 0 else 'SOME UNHEALTHY'}")
 
 def wait_for_services(services: Dict[str, int], max_wait: int = 120, check_interval: int = 5):
     """Wait for services to become healthy"""
-    print(f"⏳ Waiting up to {max_wait}s for services to become healthy...")
+    print(f"Waiting up to {max_wait}s for services to become healthy...")
     print(f"   Checking every {check_interval}s")
     
     start_time = time.time()
@@ -132,13 +134,13 @@ def wait_for_services(services: Dict[str, int], max_wait: int = 120, check_inter
         healthy = [r for r in results if r['status'] == 'healthy']
         
         if len(healthy) == len(services):
-            print(f"\n🎉 All services are healthy after {time.time() - start_time:.1f}s!")
+            print(f"\nAll services are healthy after {time.time() - start_time:.1f}s")
             return True
         
         print(f"   {len(healthy)}/{len(services)} services healthy...")
         time.sleep(check_interval)
     
-    print(f"\n⏰ Timeout: Not all services became healthy within {max_wait}s")
+    print(f"\nTIMEOUT: Not all services became healthy within {max_wait}s")
     return False
 
 def main():

@@ -18,6 +18,10 @@ RUN pip install --no-cache-dir -r requirements-qwen.txt
 # Copy MCP server script
 COPY mcp/mcp_ocr_qwen.py .
 
+# Set environment variables
+ENV HOST=0.0.0.0
+ENV PORT=8096
+
 # Expose port
 EXPOSE 8096
 

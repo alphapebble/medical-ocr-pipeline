@@ -35,6 +35,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 
 # Set environment variables
 ENV OCR_ENGINE=easyocr
+ENV HOST=0.0.0.0
 ENV PORT=8092
 ENV EASYOCR_MODULE_PATH=/app/.EasyOCR
 

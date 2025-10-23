@@ -238,23 +238,20 @@ async def ocr(image: UploadFile, lang: str = Form("en"), handwritten: bool = For
         
         # 3.2.0: Use predict(input=arr) explicitly for numpy (positional may fail in some envs)
         try:
-            res = ocr_engine.predict(input=arr)
-        except (AttributeError, TypeError):
-            # Fallback to ocr(input=arr) if predict not available
-            try:
-                res = ocr_engine.ocr(input=arr)
-            except TypeError as te:
-                if "str or Path" in str(te) or "input" in str(te).lower():
-                    # Fallback: save to temp path (enhanced for scans)
-                    with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tf:
-                        temp_path = tf.name
-                        img.save(temp_path, 'JPEG', quality=95, dpi=(300, 300))  # High-res for scans
-                    try:
-                        res = ocr_engine.predict(input=temp_path) if hasattr(ocr_engine, 'predict') else ocr_engine.ocr(input=temp_path)
-                    finally:
-                        os.unlink(temp_path)
-                else:
-                    raise te
+            # Try direct array input first
+            res = ocr_engine.ocr(arr)
+        except (AttributeError, TypeError) as te:
+            if "str or Path" in str(te) or any(x in str(te).lower() for x in ["path", "file"]):
+                # Fallback: save to temp path (enhanced for scans)
+                with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tf:
+                    temp_path = tf.name
+                    img.save(temp_path, 'JPEG', quality=95, dpi=(300, 300))  # High-res for scans
+                try:
+                    res = ocr_engine.ocr(temp_path)
+                finally:
+                    os.unlink(temp_path)
+            else:
+                raise te
     except Exception as e:
         import traceback
         return JSONResponse(

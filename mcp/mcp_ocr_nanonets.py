@@ -20,8 +20,9 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 def get_nanonets_client():
     """Get Nanonets API configuration."""
     api_key = os.getenv("NANONETS_API_KEY")
-    if not api_key:
-        raise ValueError("NANONETS_API_KEY environment variable is required")
+    if not api_key or api_key.strip() == "":
+        raise ValueError("NANONETS_API_KEY environment variable is required but not set. "
+                        "Please add your API key to .env file or disable Nanonets service.")
     
     model_id = os.getenv("NANONETS_MODEL_ID", "d4f9b9a8-1234-5678-9012-123456789abc")  # Generic OCR model
     return api_key, model_id

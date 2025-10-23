@@ -1,5 +1,5 @@
 # Docker Compose for MCP OCR Services
-version: '3.8'
+# Remove version as it's deprecated in newer Docker Compose
 
 services:
   mcp-tesseract:
@@ -17,6 +17,9 @@ services:
       timeout: 10s
       retries: 3
     restart: unless-stopped
+    profiles:
+      - lightweight
+      - full
 
   mcp-easyocr:
     build:
@@ -33,6 +36,9 @@ services:
       timeout: 10s
       retries: 3
     restart: unless-stopped
+    profiles:
+      - lightweight
+      - full
 
   mcp-paddle:
     build:
@@ -49,6 +55,9 @@ services:
       timeout: 10s
       retries: 3
     restart: unless-stopped
+    profiles:
+      - lightweight
+      - full
 
   mcp-surya:
     build:
@@ -65,6 +74,8 @@ services:
       timeout: 10s
       retries: 3
     restart: unless-stopped
+    profiles:
+      - full
 
   mcp-docling:
     build:
@@ -81,6 +92,8 @@ services:
       timeout: 10s
       retries: 3
     restart: unless-stopped
+    profiles:
+      - full
 
   mcp-doctr:
     build:
@@ -97,6 +110,8 @@ services:
       timeout: 10s
       retries: 3
     restart: unless-stopped
+    profiles:
+      - full
 
   mcp-deepseek:
     build:
@@ -113,6 +128,9 @@ services:
       timeout: 10s
       retries: 3
     restart: unless-stopped
+    profiles:
+      - full
+      - ai-models
 
   mcp-qwen:
     build:
@@ -129,6 +147,9 @@ services:
       timeout: 10s
       retries: 3
     restart: unless-stopped
+    profiles:
+      - full
+      - ai-models
 
   mcp-marker:
     build:
@@ -145,6 +166,8 @@ services:
       timeout: 10s
       retries: 3
     restart: unless-stopped
+    profiles:
+      - full
 
   mcp-nanonets:
     build:
@@ -155,13 +178,16 @@ services:
     environment:
       - OCR_ENGINE=nanonets
       - PORT=8098
-      - NANONETS_API_KEY=${NANONETS_API_KEY}
+      - NANONETS_API_KEY=${NANONETS_API_KEY:-}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8098/health"]
       interval: 30s
       timeout: 10s
       retries: 3
     restart: unless-stopped
+    profiles:
+      - full
+      - nanonets
 
   mcp-chandra:
     build:
@@ -178,24 +204,54 @@ services:
       timeout: 10s
       retries: 3
     restart: unless-stopped
+    profiles:
+      - full
 
-  # OCR Pipeline Runner
+  mcp-olmo:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.olmo
+    ports:
+      - "8100:8100"
+    environment:
+      - OCR_ENGINE=olmo
+      - PORT=8100
+      - OLMO_MODEL=allenai/olmOCR-2-7B-1025
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8100/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    profiles:
+      - full
+      - ai-models
+
+  mcp-dots:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dots
+    ports:
+      - "8101:8101"
+    environment:
+      - OCR_ENGINE=dots
+      - PORT=8101
+      - DOTS_MODEL=rednote-hilab/dots.ocr
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8101/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    profiles:
+      - full
+      - ai-models
+
+  # OCR Pipeline Runner - only for full deployment
   pipeline-runner:
     build:
       context: .
       dockerfile: docker/Dockerfile.pipeline
-    depends_on:
-      - mcp-tesseract
-      - mcp-easyocr
-      - mcp-paddle
-      - mcp-surya
-      - mcp-docling
-      - mcp-doctr
-      - mcp-deepseek
-      - mcp-qwen
-      - mcp-marker
-      - mcp-nanonets
-      - mcp-chandra
     volumes:
       - ./input_pdfs:/app/input_pdfs
       - ./outputs:/app/outputs
@@ -212,7 +268,11 @@ services:
       - MARKER_URL=http://mcp-marker:8097
       - NANONETS_URL=http://mcp-nanonets:8098
       - CHANDRA_URL=http://mcp-chandra:8099
+      - OLMO_URL=http://mcp-olmo:8100
+      - DOTS_URL=http://mcp-dots:8101
       - MEDICAL_DOMAIN=prescription
+    profiles:
+      - full
     # Remove the command to prevent auto-run, use exec instead
 
 networks:

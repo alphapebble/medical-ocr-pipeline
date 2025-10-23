@@ -16,6 +16,10 @@ RUN pip install --no-cache-dir -r requirements-nanonets.txt
 # Copy MCP server script
 COPY mcp/mcp_ocr_nanonets.py .
 
+# Set environment variables
+ENV HOST=0.0.0.0
+ENV PORT=8098
+
 # Expose port
 EXPOSE 8098
 

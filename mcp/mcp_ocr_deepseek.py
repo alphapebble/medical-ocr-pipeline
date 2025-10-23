@@ -1,6 +1,6 @@
 # mcp_ocr_deepseek.py
-# MCP-compatible OCR server using FastAPI + DeepSeek-VL.
-# Vision-Language model for document understanding and OCR tasks.
+# MCP-compatible OCR server using FastAPI + DeepSeek-OCR.
+# Specialized 3B OCR model with context-based optical compression for documents.
 import io
 import os
 import json
@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
 import uvicorn
 
-app = FastAPI(title="MCP OCR - DeepSeek-VL", version="1.0.0")
+app = FastAPI(title="MCP OCR - DeepSeek-OCR", version="1.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 # Global lazy init
@@ -21,28 +21,27 @@ _MODEL = None
 _PROCESSOR = None
 
 def get_model():
-    """Initialize DeepSeek-VL model (lazy loading)."""
+    """Initialize DeepSeek-OCR model (lazy loading)."""
     global _MODEL, _PROCESSOR
     if _MODEL is None:
         try:
             import torch
-            from transformers import AutoModelForCausalLM
-            from deepseek_vl.models import VLChatProcessor, MultiModalityCausalLM
+            from transformers import AutoModelForImageTextToText, AutoProcessor
             
-            model_path = os.getenv("DEEPSEEK_MODEL", "deepseek-ai/deepseek-vl-7b-chat")
+            model_path = os.getenv("DEEPSEEK_MODEL", "deepseek-ai/DeepSeek-OCR")
             
-            print(f"[INFO] Loading DeepSeek-VL model: {model_path}")
-            _PROCESSOR = VLChatProcessor.from_pretrained(model_path)
-            _MODEL = AutoModelForCausalLM.from_pretrained(
+            print(f"[INFO] Loading DeepSeek-OCR model: {model_path}")
+            _PROCESSOR = AutoProcessor.from_pretrained(model_path, trust_remote_code=True)
+            _MODEL = AutoModelForImageTextToText.from_pretrained(
                 model_path, 
                 trust_remote_code=True,
                 torch_dtype=torch.bfloat16,
                 device_map="auto"
             ).eval()
             
-            print("[INFO] DeepSeek-VL model loaded successfully")
+            print("[INFO] DeepSeek-OCR model loaded successfully")
         except Exception as e:
-            print(f"[ERROR] Failed to load DeepSeek-VL model: {e}")
+            print(f"[ERROR] Failed to load DeepSeek-OCR model: {e}")
             raise e
     
     return _MODEL, _PROCESSOR

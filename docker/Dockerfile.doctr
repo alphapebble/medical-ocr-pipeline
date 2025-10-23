@@ -24,7 +24,9 @@ RUN pip install --no-cache-dir -r requirements-doctr.txt
 COPY mcp/mcp_ocr_doctr.py .
 
 # Set environment variables
-ENV PYTHONUNBUFFERED=1
+# Set environment variables
+ENV OCR_ENGINE=doctr
+ENV HOST=0.0.0.0
 ENV PORT=8094
 
 # Expose port

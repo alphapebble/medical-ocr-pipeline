@@ -28,6 +28,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 
 # Set environment variables
 ENV OCR_ENGINE=tesseract
+ENV HOST=0.0.0.0
 ENV PORT=8089
 
 # Run the MCP server

@@ -10,4 +10,3 @@ python-multipart==0.0.6
 # chandra-ocr
 
 # Optional MCP support
-fastmcp==0.1.0

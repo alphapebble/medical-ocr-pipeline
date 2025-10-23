@@ -1,6 +1,6 @@
 # mcp_ocr_qwen.py
 # MCP-compatible OCR server using FastAPI + Qwen3-VL.
-# Latest vision-language model with enhanced OCR capabilities for 32 languages.
+# Latest 32B vision-language model with enhanced OCR capabilities for 32 languages.
 import io
 import os
 import json
@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
 import uvicorn
 
-app = FastAPI(title="MCP OCR - Qwen3-VL", version="1.0.0")
+app = FastAPI(title="MCP OCR - Qwen3-VL-32B", version="1.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 # Global lazy init
@@ -28,7 +28,7 @@ def get_model():
             import torch
             from transformers import AutoModelForImageTextToText, AutoProcessor
             
-            model_path = os.getenv("QWEN_MODEL", "Qwen/Qwen3-VL-8B-Instruct")
+            model_path = os.getenv("QWEN_MODEL", "Qwen/Qwen3-VL-32B-Instruct")
             
             print(f"[INFO] Loading Qwen3-VL model: {model_path}")
             _PROCESSOR = AutoProcessor.from_pretrained(model_path)

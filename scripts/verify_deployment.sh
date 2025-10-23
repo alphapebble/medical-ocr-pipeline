@@ -5,8 +5,8 @@
 
 set -e
 
-echo "🔍 Medical OCR Pipeline - Deployment Verification"
-echo "================================================="
+echo "Medical OCR Pipeline - Deployment Verification"
+echo "=============================================="
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
@@ -21,20 +21,20 @@ NC='\033[0m' # No Color
 # Verification functions
 check_file() {
     if [ -f "$1" ]; then
-        echo -e "${GREEN}✅${NC} $1"
+        echo -e "${GREEN}[OK]${NC} $1"
         return 0
     else
-        echo -e "${RED}❌${NC} $1 - MISSING"
+        echo -e "${RED}[MISSING]${NC} $1"
         return 1
     fi
 }
 
 check_directory() {
     if [ -d "$1" ]; then
-        echo -e "${GREEN}✅${NC} $1/"
+        echo -e "${GREEN}[OK]${NC} $1/"
         return 0
     else
-        echo -e "${RED}❌${NC} $1/ - MISSING"
+        echo -e "${RED}[MISSING]${NC} $1/"
         return 1
     fi
 }

@@ -18,6 +18,10 @@ RUN pip install --no-cache-dir -r requirements-deepseek.txt
 # Copy MCP server script
 COPY mcp/mcp_ocr_deepseek.py .
 
+# Set environment variables
+ENV HOST=0.0.0.0
+ENV PORT=8095
+
 # Expose port
 EXPOSE 8095
 
