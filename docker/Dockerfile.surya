@@ -1,19 +1,17 @@
 # Dockerfile for Surya OCR MCP Service
 FROM python:3.11-slim
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender-dev \
-    libgomp1 \
-    libgl1-mesa-glx \
-    curl \
-    git \
-    && rm -rf /var/lib/apt/lists/*
-
-# Set working directory
+    # Install system dependencies
+    RUN apt-get update && apt-get install -y \
+        libglib2.0-0 \
+        libsm6 \
+        libxext6 \
+        libxrender-dev \
+        libgomp1 \
+        libgl1-mesa-dev \
+        curl \
+        git \
+        && rm -rf /var/lib/apt/lists/*# Set working directory
 WORKDIR /app
 
 # Copy requirements and install Python dependencies

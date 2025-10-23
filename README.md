@@ -14,12 +14,12 @@ This pipeline processes medical documents (PDFs, images) through multiple OCR en
 
 ## Key Features
 
-- **🐳 Docker-First Deployment** - Individual containers for each OCR service
-- **⚖️ Multiple Orchestration Options** - Shell scripts, Docker Compose, Prefect, Dagger
-- **🎯 Multiple OCR Engines** - 11 engines including traditional (Tesseract, EasyOCR, PaddleOCR), modern (Surya, Docling, DocTR), vision-language models (DeepSeek-VL, Qwen3-VL), specialized tools (Marker, Nanonets, Chandra)
-- **🏥 Medical Domain Specialization** - Prescription, radiology, pathology workflows
-- **🔧 Service Isolation** - Each OCR engine runs in its own container/environment
-- **📊 Health Monitoring** - Built-in health checks and service monitoring
+- **Docker-First Deployment** - Individual containers for each OCR service
+- **Multiple Orchestration Options** - Shell scripts, Docker Compose, Prefect, Dagger
+- **Multiple OCR Engines** - 11 engines including traditional (Tesseract, EasyOCR, PaddleOCR), modern (Surya, Docling, DocTR), vision-language models (DeepSeek-VL, Qwen3-VL), specialized tools (Marker, Nanonets, Chandra)
+- **Medical Domain Specialization** - Prescription, radiology, pathology workflows
+- **Service Isolation** - Each OCR engine runs in its own container/environment
+- **Health Monitoring** - Built-in health checks and service monitoring
 
 ## Repository Structure
 
@@ -75,7 +75,7 @@ medical-ocr-pipeline/
 
 ## Quick Start
 
-### � API Keys Setup (Optional)
+### API Keys Setup (Optional)
 
 Some OCR engines require API keys:
 
@@ -97,7 +97,7 @@ HUGGING_FACE_HUB_TOKEN=your_huggingface_token_here
    - **Nanonets:** Register at [nanonets.com](https://app.nanonets.com/) 
    - **Hugging Face:** Get token at [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
 
-### �🐳 Docker Deployment (Recommended)
+### Docker Deployment (Recommended)
 
 1. **Validate configuration:**
 ```bash
@@ -149,7 +149,7 @@ python scripts/health_check.py --timeout 10
 ls -la outputs/
 ```
 
-### ⚙️ Shell Script Orchestration (Alternative)
+### Shell Script Orchestration (Alternative)
 
 1. **Setup conda environments:**
 ```bash
@@ -246,7 +246,7 @@ The pipeline supports 11 different OCR engines, each with unique strengths:
 - **Qwen3-VL (Port 8096):** Alibaba's vision-language model, 32-language support
 
 ### Specialized Tools
-- **Marker (Port 8097):** High-accuracy document conversion to markdown/JSON
+- **Marker (Port 8097):** Advanced document conversion to structured formats (Markdown/JSON/HTML) with layout preservation
 - **Nanonets (Port 8098):** Cloud-based OCR API for documents/receipts/forms
 - **Chandra (Port 8099):** Modern OCR engine with Tesseract fallback
 
@@ -254,7 +254,8 @@ The pipeline supports 11 different OCR engines, each with unique strengths:
 - **Traditional documents:** Tesseract, EasyOCR
 - **Complex layouts:** Docling, Surya, DocTR
 - **Multilingual content:** Qwen3-VL, EasyOCR, PaddleOCR
-- **High accuracy needs:** Marker, DeepSeek-VL, Nanonets
+- **Structured conversion:** Marker (for preserving document structure)
+- **High accuracy OCR:** DeepSeek-VL, Nanonets
 - **Fast processing:** Tesseract, Chandra (fallback mode)
 
 ## Architecture

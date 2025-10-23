@@ -5,17 +5,15 @@ uvicorn[standard]==0.24.0
 pydantic==2.5.0
 python-multipart==0.0.6
 
-# Docling dependencies
-docling==1.16.1
-docling-core==1.8.1
-docling-ibm-models==1.0.9
-docling-parse==1.9.1
+# Docling dependencies - use latest compatible versions
+docling>=1.16.0
+# Let docling handle its own sub-dependencies
 
 # PDF processing
-PyMuPDF==1.23.8
-pdf2image==1.16.3
-Pillow==10.1.0
+PyMuPDF>=1.23.8
+pdf2image>=1.16.3
+Pillow>=10.2.0
 
 # Additional utilities
-requests==2.31.0
-numpy==1.26.0
+requests>=2.32.2
+numpy>=1.24.3
