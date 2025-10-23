@@ -57,9 +57,9 @@ medical-ocr-pipeline/
    - libgl1-mesa-glx not available in newer Debian
    - Solution: Updated to libgl1-mesa-dev
 
-## Testing Status (10/13 Services Verified)
+## Testing Status (8/13 Services Fully Operational)
 
-### ✅ Working Services:
+### ✅ Production Ready Services (8 Services):
 1. **Tesseract OCR** (Port 8089) - Basic OCR with 100+ languages
 2. **PaddleOCR** (Port 8090) - 109 languages, lightweight
 3. **EasyOCR** (Port 8092) - 80+ languages, neural networks
@@ -68,12 +68,14 @@ medical-ocr-pipeline/
 6. **Chandra** (Port 8098) - Latest open-source OCR
 7. **dots.ocr** (Port 8099) - 3B parameter model
 8. **olmOCR** (Port 8100) - 2.7B specialized OCR model
-9. **Marker PDF** (Port 8096) - PDF-to-markdown conversion ✨ FIXED
-10. **DeepSeek-OCR** (Port 8095) - 3B parameter vision model ✨ FIXED
 
-### 🔄 Remaining Services (Build Complete, Testing Pending):
+### ⚠️ Built But Untested (2 Services):
+9. **Marker PDF** (Port 8096) - PDF-to-markdown conversion (built successfully)
+10. **DeepSeek-OCR** (Port 8095) - 3B parameter vision model (built successfully)
+
+### �️ Ready to Build (3 Services - Dependencies Fixed):
 11. **Docling** (Port 8093) - IBM's document processing (dependencies fixed)
-12. **DocTR** (Port 8094) - Document text recognition (system deps pending)
+12. **DocTR** (Port 8094) - Document text recognition (system deps added)
 13. **Qwen3-VL** (Port 8101) - 32B multimodal model (dependencies updated)
 
 ## Environment Variables
@@ -90,11 +92,24 @@ export HF_HOME=/app/.cache/huggingface
 export TRANSFORMERS_CACHE=/app/.cache/huggingface
 ```
 
-## Next Steps
-1. Resolve Docker daemon filesystem issue
-2. Complete testing of remaining 4 services
-3. Deploy full 13-service stack with `docker-compose up --profile full`
-4. Validate end-to-end medical document processing pipeline
+## 🔧 Docker Space Management
+
+### Cleanup Script
+```bash
+# Remove unused Docker images to free space
+./cleanup_docker.sh
+
+# Options:
+# 1. Remove tested images (keep core 8 + ready-to-build 3)
+# 2. Remove ALL images (clean slate) 
+# 3. Remove build cache only
+# 4. Skip cleanup
+```
+
+### Current Status: 62% Complete (8/13 Fully Operational)
+- **8 Services**: Production ready and tested
+- **2 Services**: Built but need testing (Docker filesystem issue)
+- **3 Services**: Dependencies fixed, ready to build
 
 ## Usage Patterns
 ```bash
