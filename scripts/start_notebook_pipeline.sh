@@ -88,13 +88,13 @@ open_notebook() {
 
 # Function to run notebooks in sequence
 run_sequential() {
-    echo -e "${BLUE}🔄 Running notebooks sequentially...${NC}"
+    echo -e "${BLUE}[PROCESS] Running notebooks sequentially...${NC}"
     
     for notebook_info in "${NOTEBOOKS[@]}"; do
         IFS=':' read -r notebook description <<< "$notebook_info"
         
         echo ""
-        echo -e "${YELLOW}📋 Next: $notebook${NC}"
+        echo -e "${YELLOW}[STATUS] Next: $notebook${NC}"
         echo -e "   $description"
         echo ""
         read -p "Press Enter to open this notebook (or 'q' to quit): " input
@@ -118,20 +118,20 @@ run_sequential() {
 
 # Function to run notebooks in parallel
 run_parallel() {
-    echo -e "${BLUE}🚀 Opening all notebooks in parallel...${NC}"
+    echo -e "${BLUE}[LAUNCH] Opening all notebooks in parallel...${NC}"
     
     for notebook_info in "${NOTEBOOKS[@]}"; do
         IFS=':' read -r notebook description <<< "$notebook_info"
         open_notebook "$notebook" "$description"
     done
     
-    echo -e "${GREEN}✅ All main notebooks opened${NC}"
+    echo -e "${GREEN}[SUCCESS] All main notebooks opened${NC}"
     
     echo ""
     read -p "Open QA/analysis notebooks too? (y/N): " open_qa
     
     if [[ "$open_qa" == "y" || "$open_qa" == "Y" ]]; then
-        echo -e "${BLUE}📊 Opening QA notebooks...${NC}"
+        echo -e "${BLUE}[STATS] Opening QA notebooks...${NC}"
         
         for notebook_info in "${QA_NOTEBOOKS[@]}"; do
             IFS=':' read -r notebook description <<< "$notebook_info"
@@ -146,7 +146,7 @@ run_parallel() {
 
 # Function to show notebook overview
 show_overview() {
-    echo -e "${BLUE}📋 Pipeline Overview${NC}"
+    echo -e "${BLUE}[STATUS] Pipeline Overview${NC}"
     echo "===================="
     echo ""
     echo -e "${YELLOW}Main Pipeline Notebooks:${NC}"

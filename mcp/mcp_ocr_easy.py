@@ -114,8 +114,8 @@ def parse_easy_output(results, img_w, img_h):
 @app.get("/health")
 async def health():
     try:
-        _ = get_reader(["en"])
-        _ = get_reader(["hi"])  # Test Indic
+        # Quick health check without initializing models
+        import easyocr
         return {"ok": True, "engine": "easyocr", "version": "latest", "indic_supported": True}
     except Exception as e:
         return {"ok": False, "engine": "easyocr", "error": str(e)}

@@ -102,7 +102,7 @@ for req in "${REQUIREMENTS[@]}"; do
 done
 
 # MCP services
-echo -e "\n${BLUE}🔧 MCP Services${NC}"
+echo -e "\n${BLUE}[ISSUE] MCP Services${NC}"
 echo "==============="
 
 MCP_SERVICES=(
@@ -127,7 +127,7 @@ for service in "${MCP_SERVICES[@]}"; do
 done
 
 # Scripts
-echo -e "\n${BLUE}📝 Scripts${NC}"
+echo -e "\n${BLUE}[LOG] Scripts${NC}"
 echo "=========="
 
 SCRIPTS=(
@@ -154,12 +154,12 @@ echo -e "\n${BLUE}🐳 Docker Compose Validation${NC}"
 echo "=============================="
 
 if command -v docker-compose &> /dev/null; then
-    echo -e "${GREEN}✅${NC} docker-compose found"
+    echo -e "${GREEN}[SUCCESS]${NC} docker-compose found"
     
     if docker-compose config &> /dev/null; then
-        echo -e "${GREEN}✅${NC} docker-compose.yml is valid"
+        echo -e "${GREEN}[SUCCESS]${NC} docker-compose.yml is valid"
     else
-        echo -e "${RED}❌${NC} docker-compose.yml has syntax errors"
+        echo -e "${RED}[ERROR]${NC} docker-compose.yml has syntax errors"
         failed_scripts=$((failed_scripts + 1))
     fi
 else
@@ -167,19 +167,19 @@ else
 fi
 
 # Summary
-echo -e "\n${BLUE}📊 Verification Summary${NC}"
+echo -e "\n${BLUE}[STATS] Verification Summary${NC}"
 echo "======================="
 
 total_errors=$((failed_dockerfiles + failed_requirements + failed_services + failed_scripts))
 
-echo "Dockerfiles: $((${#DOCKERFILES[@]} - failed_dockerfiles))/${#DOCKERFILES[@]} ✅"
-echo "Requirements: $((${#REQUIREMENTS[@]} - failed_requirements))/${#REQUIREMENTS[@]} ✅"
-echo "MCP Services: $((${#MCP_SERVICES[@]} - failed_services))/${#MCP_SERVICES[@]} ✅"
-echo "Scripts: $((${#SCRIPTS[@]} - failed_scripts))/${#SCRIPTS[@]} ✅"
+echo "Dockerfiles: $((${#DOCKERFILES[@]} - failed_dockerfiles))/${#DOCKERFILES[@]} [SUCCESS]"
+echo "Requirements: $((${#REQUIREMENTS[@]} - failed_requirements))/${#REQUIREMENTS[@]} [SUCCESS]"
+echo "MCP Services: $((${#MCP_SERVICES[@]} - failed_services))/${#MCP_SERVICES[@]} [SUCCESS]"
+echo "Scripts: $((${#SCRIPTS[@]} - failed_scripts))/${#SCRIPTS[@]} [SUCCESS]"
 
 if [ $total_errors -eq 0 ]; then
-    echo -e "\n${GREEN}🎉 ALL CHECKS PASSED!${NC}"
-    echo -e "${GREEN}✅ Deployment is ready${NC}"
+    echo -e "\n${GREEN}[COMPLETE] ALL CHECKS PASSED!${NC}"
+    echo -e "${GREEN}[SUCCESS] Deployment is ready${NC}"
     
     echo -e "\n${BLUE}Next Steps:${NC}"
     echo "1. Set up API keys: cp .env.template .env && edit .env"
@@ -189,7 +189,7 @@ if [ $total_errors -eq 0 ]; then
     
     exit 0
 else
-    echo -e "\n${RED}❌ $total_errors ERRORS FOUND${NC}"
+    echo -e "\n${RED}[ERROR] $total_errors ERRORS FOUND${NC}"
     echo -e "${RED}⚠️ Please fix the missing files before deployment${NC}"
     exit 1
 fi

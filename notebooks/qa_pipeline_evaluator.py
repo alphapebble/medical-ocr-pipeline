@@ -853,10 +853,10 @@ class QAPipelineEvaluator:
         report_path.write_text(html_content, encoding='utf-8')
         
         print(f"\n✓ Evaluation complete for {evaluation.run_id}")
-        print(f"  📊 Detailed metrics: {csv_path}")
+        print(f"  [STATS] Detailed metrics: {csv_path}")
         print(f"  📈 Quality trends: {plot_path}")
-        print(f"  📋 Full report: {report_path}")
-        print(f"  🎯 Overall quality score: {evaluation.quality_score:.3f}")
+        print(f"  [STATUS] Full report: {report_path}")
+        print(f"  [TARGET] Overall quality score: {evaluation.quality_score:.3f}")
         print(f"  📉 Total content drop: {evaluation.total_content_drop:.1%}")
         
         if evaluation.recommended_actions:
@@ -1021,11 +1021,11 @@ def main():
             ground_truth_dir=args.ground_truth_dir
         )
         
-        print(f"\n🎉 Evaluation completed successfully!")
+        print(f"\n[COMPLETE] Evaluation completed successfully!")
         print(f"📁 Results saved to: {evaluator.output_base}")
         
     except Exception as e:
-        print(f"❌ Evaluation failed: {str(e)}")
+        print(f"[ERROR] Evaluation failed: {str(e)}")
         import traceback
         traceback.print_exc()
 

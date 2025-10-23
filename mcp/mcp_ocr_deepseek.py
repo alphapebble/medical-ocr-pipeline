@@ -26,13 +26,13 @@ def get_model():
     if _MODEL is None:
         try:
             import torch
-            from transformers import AutoModelForImageTextToText, AutoProcessor
+            from transformers import AutoModel, AutoProcessor
             
             model_path = os.getenv("DEEPSEEK_MODEL", "deepseek-ai/DeepSeek-OCR")
             
             print(f"[INFO] Loading DeepSeek-OCR model: {model_path}")
             _PROCESSOR = AutoProcessor.from_pretrained(model_path, trust_remote_code=True)
-            _MODEL = AutoModelForImageTextToText.from_pretrained(
+            _MODEL = AutoModel.from_pretrained(
                 model_path, 
                 trust_remote_code=True,
                 torch_dtype=torch.bfloat16,

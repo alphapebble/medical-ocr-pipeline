@@ -16,7 +16,7 @@ def test_tesseract(image_path):
     try:
         import pytesseract
         from PIL import Image
-        print("✅ Tesseract imported successfully")
+        print("[SUCCESS] Tesseract imported successfully")
         
         print(f"Loading image: {image_path}")
         if image_path.lower().endswith('.pdf'):
@@ -27,16 +27,16 @@ def test_tesseract(image_path):
                 page = pdf[0]
                 bitmap = page.render(scale=2.0)
                 img = bitmap.to_pil()
-                print(f"✅ PDF converted: {img.size}")
+                print(f"[SUCCESS] PDF converted: {img.size}")
             except ImportError:
-                print("❌ pypdfium2 not installed")
+                print("[ERROR] pypdfium2 not installed")
                 return False
         else:
             img = Image.open(image_path).convert('RGB')
         
         print("Running OCR...")
         text = pytesseract.image_to_string(img)
-        print(f"✅ OCR completed - extracted {len(text)} characters")
+        print(f"[SUCCESS] OCR completed - extracted {len(text)} characters")
         
         if text.strip():
             print(f"Sample text: '{text[:100]}...'")
@@ -46,7 +46,7 @@ def test_tesseract(image_path):
         return True
         
     except Exception as e:
-        print(f"❌ Tesseract failed: {e}")
+        print(f"[ERROR] Tesseract failed: {e}")
         return False
 
 def test_easyocr(image_path):
@@ -57,11 +57,11 @@ def test_easyocr(image_path):
     
     try:
         import easyocr
-        print("✅ EasyOCR imported successfully")
+        print("[SUCCESS] EasyOCR imported successfully")
         
         print("Initializing EasyOCR...")
         reader = easyocr.Reader(['en'])
-        print("✅ EasyOCR initialized")
+        print("[SUCCESS] EasyOCR initialized")
         
         print(f"Loading image: {image_path}")
         
@@ -73,15 +73,15 @@ def test_easyocr(image_path):
                 page = pdf[0]
                 bitmap = page.render(scale=2.0)
                 img = bitmap.to_pil()
-                print(f"✅ PDF converted: {img.size}")
+                print(f"[SUCCESS] PDF converted: {img.size}")
                 image_path = img
             except ImportError:
-                print("❌ pypdfium2 not installed")
+                print("[ERROR] pypdfium2 not installed")
                 return False
         
         print("Running OCR...")
         results = reader.readtext(image_path)
-        print(f"✅ OCR completed - found {len(results)} text blocks")
+        print(f"[SUCCESS] OCR completed - found {len(results)} text blocks")
         
         for i, (bbox, text, conf) in enumerate(results[:3]):
             print(f"  Block {i+1}: '{text[:50]}' (conf: {conf:.3f})")
@@ -89,7 +89,7 @@ def test_easyocr(image_path):
         return True
         
     except Exception as e:
-        print(f"❌ EasyOCR failed: {e}")
+        print(f"[ERROR] EasyOCR failed: {e}")
         return False
 
 def test_docling(image_path):
@@ -100,15 +100,15 @@ def test_docling(image_path):
     
     try:
         from docling.document_converter import DocumentConverter
-        print("✅ Docling imported successfully")
+        print("[SUCCESS] Docling imported successfully")
         
         print("Initializing Docling...")
         converter = DocumentConverter()
-        print("✅ Docling initialized")
+        print("[SUCCESS] Docling initialized")
         
         print(f"Processing document: {image_path}")
         result = converter.convert(image_path)
-        print(f"✅ Document processed")
+        print(f"[SUCCESS] Document processed")
         
         if result.document.main_text:
             text = result.document.main_text
@@ -120,7 +120,7 @@ def test_docling(image_path):
         return True
         
     except Exception as e:
-        print(f"❌ Docling failed: {e}")
+        print(f"[ERROR] Docling failed: {e}")
         return False
 
 def test_doctr(image_path):
@@ -132,19 +132,19 @@ def test_doctr(image_path):
     try:
         from doctr.io import DocumentFile
         from doctr.models import ocr_predictor
-        print("✅ DocTR imported successfully")
+        print("[SUCCESS] DocTR imported successfully")
         
         print("Initializing DocTR...")
         model = ocr_predictor(pretrained=True)
-        print("✅ DocTR initialized")
+        print("[SUCCESS] DocTR initialized")
         
         print(f"Loading document: {image_path}")
         doc = DocumentFile.from_pdf(image_path) if image_path.lower().endswith('.pdf') else DocumentFile.from_images([image_path])
-        print(f"✅ Document loaded")
+        print(f"[SUCCESS] Document loaded")
         
         print("Running OCR...")
         result = model(doc)
-        print(f"✅ OCR completed")
+        print(f"[SUCCESS] OCR completed")
         
         # Extract text
         text_blocks = []
@@ -164,7 +164,7 @@ def test_doctr(image_path):
         return True
         
     except Exception as e:
-        print(f"❌ DocTR failed: {e}")
+        print(f"[ERROR] DocTR failed: {e}")
         return False
 
 def test_deepseek(image_path):
@@ -176,14 +176,14 @@ def test_deepseek(image_path):
     try:
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer
-        print("✅ DeepSeek dependencies imported")
+        print("[SUCCESS] DeepSeek dependencies imported")
         
         print("⚠️ DeepSeek VL requires significant GPU resources - skipping actual test")
         print("   Model would be loaded with: AutoModelForCausalLM.from_pretrained('deepseek-ai/deepseek-vl-7b-chat')")
         return True
         
     except Exception as e:
-        print(f"❌ DeepSeek failed: {e}")
+        print(f"[ERROR] DeepSeek failed: {e}")
         return False
 
 def test_qwen(image_path):
@@ -194,14 +194,14 @@ def test_qwen(image_path):
     
     try:
         from transformers import Qwen2VLForConditionalGeneration, AutoTokenizer, AutoProcessor
-        print("✅ Qwen3-VL imported successfully")
+        print("[SUCCESS] Qwen3-VL imported successfully")
         
         print("⚠️ Qwen3-VL requires significant GPU resources - skipping actual test")
         print("   Model would be loaded with: Qwen2VLForConditionalGeneration.from_pretrained('Qwen/Qwen2-VL-2B-Instruct')")
         return True
         
     except Exception as e:
-        print(f"❌ Qwen3-VL failed: {e}")
+        print(f"[ERROR] Qwen3-VL failed: {e}")
         return False
 
 def test_marker(image_path):
@@ -213,7 +213,7 @@ def test_marker(image_path):
     try:
         from marker.convert import convert_single_pdf
         from marker.models import load_all_models
-        print("✅ Marker imported successfully")
+        print("[SUCCESS] Marker imported successfully")
         
         if not image_path.lower().endswith('.pdf'):
             print("⚠️ Marker requires PDF input - converting image to PDF")
@@ -234,7 +234,7 @@ def test_marker(image_path):
         return True
         
     except Exception as e:
-        print(f"❌ Marker failed: {e}")
+        print(f"[ERROR] Marker failed: {e}")
         return False
 
 def test_nanonets(image_path):
@@ -246,14 +246,14 @@ def test_nanonets(image_path):
     try:
         import requests
         import base64
-        print("✅ Nanonets dependencies imported")
+        print("[SUCCESS] Nanonets dependencies imported")
         
         print("⚠️ Nanonets requires API key - skipping actual API call")
         print("   Would use endpoint: https://app.nanonets.com/api/v2/OCR/Model/{model_id}/LabelFile/")
         return True
         
     except Exception as e:
-        print(f"❌ Nanonets failed: {e}")
+        print(f"[ERROR] Nanonets failed: {e}")
         return False
 
 def test_chandra(image_path):
@@ -266,7 +266,7 @@ def test_chandra(image_path):
         # Try Chandra OCR first
         try:
             import chandra_ocr
-            print("✅ Chandra OCR imported successfully")
+            print("[SUCCESS] Chandra OCR imported successfully")
             print("⚠️ Chandra OCR test implementation needed")
             return True
         except ImportError:
@@ -284,11 +284,11 @@ def test_chandra(image_path):
                 img = Image.open(image_path).convert('RGB')
             
             text = pytesseract.image_to_string(img)
-            print(f"✅ Fallback OCR completed - extracted {len(text)} characters")
+            print(f"[SUCCESS] Fallback OCR completed - extracted {len(text)} characters")
             return True
         
     except Exception as e:
-        print(f"❌ Chandra OCR failed: {e}")
+        print(f"[ERROR] Chandra OCR failed: {e}")
         return False
 
 def test_paddleocr(image_path):
@@ -298,12 +298,12 @@ def test_paddleocr(image_path):
     
     try:
         from paddleocr import PaddleOCR
-        print("✅ PaddleOCR imported successfully")
+        print("[SUCCESS] PaddleOCR imported successfully")
         
         print("Initializing PaddleOCR...")
         # Minimal initialization for newer versions
         ocr = PaddleOCR(lang='en')
-        print("✅ PaddleOCR initialized")
+        print("[SUCCESS] PaddleOCR initialized")
         
         print(f"Loading image: {image_path}")
         
@@ -316,20 +316,20 @@ def test_paddleocr(image_path):
                 page = pdf[0]
                 bitmap = page.render(scale=2.0)
                 img = bitmap.to_pil()
-                print(f"✅ PDF converted: {img.size}")
+                print(f"[SUCCESS] PDF converted: {img.size}")
             except ImportError:
-                print("❌ pypdfium2 not installed. Install with: pip install pypdfium2")
+                print("[ERROR] pypdfium2 not installed. Install with: pip install pypdfium2")
                 return False
         else:
             img = Image.open(image_path).convert('RGB')
         
         arr = np.array(img)
-        print(f"✅ Image loaded: {arr.shape}")
+        print(f"[SUCCESS] Image loaded: {arr.shape}")
         
         print("Running OCR...")
         # Newer PaddleOCR versions use predict() without cls parameter
         result = ocr.ocr(arr)
-        print(f"✅ OCR completed")
+        print(f"[SUCCESS] OCR completed")
         
         if result and result[0]:
             lines = list(result[0])  # Convert to list if it's a generator/dict
@@ -344,11 +344,11 @@ def test_paddleocr(image_path):
         return True
         
     except ImportError as e:
-        print(f"❌ PaddleOCR not installed: {e}")
+        print(f"[ERROR] PaddleOCR not installed: {e}")
         print("Install with: pip install paddleocr")
         return False
     except Exception as e:
-        print(f"❌ PaddleOCR failed: {e}")
+        print(f"[ERROR] PaddleOCR failed: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -369,13 +369,13 @@ def test_surya(image_path):
         from surya.foundation import FoundationPredictor
         from surya.recognition import RecognitionPredictor
         from surya.detection import DetectionPredictor
-        print("✅ Surya imported successfully")
+        print("[SUCCESS] Surya imported successfully")
         
         print("Initializing Surya (this may take a while)...")
         foundation_predictor = FoundationPredictor(device='cpu', dtype=torch.float32)
         recognition_predictor = RecognitionPredictor(foundation_predictor)
         detection_predictor = DetectionPredictor(device='cpu', dtype=torch.float32)
-        print("✅ Surya initialized")
+        print("[SUCCESS] Surya initialized")
         
         print(f"Loading image: {image_path}")
         
@@ -388,14 +388,14 @@ def test_surya(image_path):
                 page = pdf[0]
                 bitmap = page.render(scale=2.0)
                 img = bitmap.to_pil()
-                print(f"✅ PDF converted: {img.size}")
+                print(f"[SUCCESS] PDF converted: {img.size}")
             except ImportError:
-                print("❌ pypdfium2 not installed. Install with: pip install pypdfium2")
+                print("[ERROR] pypdfium2 not installed. Install with: pip install pypdfium2")
                 return False
         else:
             img = Image.open(image_path).convert('RGB')
         
-        print(f"✅ Image loaded: {img.size}")
+        print(f"[SUCCESS] Image loaded: {img.size}")
         
         print("Running OCR...")
         # Use task name 'ocr_with_boxes', not language code!
@@ -404,7 +404,7 @@ def test_surya(image_path):
             ['ocr_with_boxes'],  # Task name, not language!
             det_predictor=detection_predictor
         )
-        print(f"✅ OCR completed")
+        print(f"[SUCCESS] OCR completed")
         
         if predictions and hasattr(predictions[0], 'text_lines'):
             lines = predictions[0].text_lines
@@ -419,11 +419,11 @@ def test_surya(image_path):
         return True
         
     except ImportError as e:
-        print(f"❌ Surya not installed: {e}")
+        print(f"[ERROR] Surya not installed: {e}")
         print("Install with: pip install surya-ocr")
         return False
     except Exception as e:
-        print(f"❌ Surya failed: {e}")
+        print(f"[ERROR] Surya failed: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -438,7 +438,7 @@ def main():
         print(f"Error: Image not found: {image_path}")
         sys.exit(1)
     
-    print("🔍 OCR Engine Direct Test")
+    print("[INFO] OCR Engine Direct Test")
     print(f"Image: {image_path}")
     
     results = {
@@ -459,7 +459,7 @@ def main():
     print("SUMMARY")
     print("="*60)
     for name, success in results.items():
-        status = "✅ PASS" if success else "❌ FAIL"
+        status = "[SUCCESS] PASS" if success else "[ERROR] FAIL"
         print(f"{name:20s} {status}")
 
 if __name__ == "__main__":

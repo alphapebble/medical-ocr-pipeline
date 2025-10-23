@@ -2,12 +2,20 @@ fastapi==0.104.1
 uvicorn==0.24.0
 pillow>=10.2.0
 torch>=2.3.0
-transformers>=4.47.0
 numpy>=1.24.3
 requests==2.31.0
 python-multipart==0.0.6
+addict>=2.4.0
+matplotlib>=3.7.0
+torchvision>=0.18.0
+easydict>=1.9.0
+einops>=0.6.0
+
+# Install transformers with support for newer models
+transformers>=4.47.0
 
 # DeepSeek-OCR specific - use latest OCR model
-# No additional packages needed for DeepSeek-OCR (uses standard transformers)
+# Added missing dependencies: addict, matplotlib, torchvision, easydict, einops
+# Note: flash-attn removed as it causes build issues and may not be required
 
 # Optional MCP support

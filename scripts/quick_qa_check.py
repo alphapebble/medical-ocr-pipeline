@@ -144,11 +144,11 @@ def compare_stages(before_data: Dict, after_data: Dict) -> Dict:
 
 def print_stage_summary(stage_name: str, data: Dict):
     """Print summary for a single stage"""
-    print(f"\n📊 Stage: {stage_name}")
+    print(f"\n[STATS] Stage: {stage_name}")
     print("=" * 40)
     
     if not data:
-        print("❌ No data found")
+        print("[ERROR] No data found")
         return
     
     total_metrics = defaultdict(int)
@@ -170,16 +170,16 @@ def print_stage_summary(stage_name: str, data: Dict):
     
     avg_confidence = sum(confidence_values) / len(confidence_values) if confidence_values else 0
     
-    print(f"📝 Total characters: {total_metrics['total_chars']:,}")
+    print(f"[LOG] Total characters: {total_metrics['total_chars']:,}")
     print(f"📄 Total words: {total_metrics['total_words']:,}")
     print(f"🧱 Total blocks: {total_metrics['total_blocks']:,}")
-    print(f"📊 Average confidence: {avg_confidence:.3f}")
+    print(f"[STATS] Average confidence: {avg_confidence:.3f}")
     print(f"⚠️  Low confidence blocks: {total_metrics['low_confidence_blocks']}")
-    print(f"❌ Empty blocks: {total_metrics['empty_blocks']}")
+    print(f"[ERROR] Empty blocks: {total_metrics['empty_blocks']}")
 
 def print_comparison(before_stage: str, after_stage: str, comparison: Dict):
     """Print comparison between two stages"""
-    print(f"\n🔄 Comparison: {before_stage} → {after_stage}")
+    print(f"\n[PROCESS] Comparison: {before_stage} → {after_stage}")
     print("=" * 50)
     
     changes = comparison['changes']
@@ -223,11 +223,11 @@ def print_comparison(before_stage: str, after_stage: str, comparison: Dict):
         print(f"{conf_icon} Confidence changed: {conf_change:+.3f}")
     
     # Quality assessment
-    print("\n🎯 Quality Assessment:")
+    print("\n[TARGET] Quality Assessment:")
     
     # Content loss assessment
     if abs(char_change_pct) < 5:
-        print("   ✅ Content change: Minimal (<5%)")
+        print("   [SUCCESS] Content change: Minimal (<5%)")
     elif abs(char_change_pct) < 15:
         print("   🟡 Content change: Moderate (5-15%)")
     else:
@@ -235,14 +235,14 @@ def print_comparison(before_stage: str, after_stage: str, comparison: Dict):
     
     # Block efficiency
     if block_change < 0 and char_change >= 0:
-        print("   ✅ Block efficiency: Improved (fewer blocks, same/more content)")
+        print("   [SUCCESS] Block efficiency: Improved (fewer blocks, same/more content)")
     elif block_change > 0 and char_change <= 0:
         print("   ⚠️  Block efficiency: Decreased (more blocks, same/less content)")
     
     # Empty blocks
     empty_change = changes['empty_blocks_change']
     if empty_change < 0:
-        print("   ✅ Empty blocks: Reduced")
+        print("   [SUCCESS] Empty blocks: Reduced")
     elif empty_change > 5:
         print("   ⚠️  Empty blocks: Increased significantly")
 
@@ -251,17 +251,17 @@ def quick_qa_check(run_dir: str, stage: str, compare_with: Optional[str] = None)
     
     run_path = Path(run_dir)
     if not run_path.exists():
-        print(f"❌ Run directory not found: {run_dir}")
+        print(f"[ERROR] Run directory not found: {run_dir}")
         return
     
     stage_path = run_path / stage
     if not stage_path.exists():
-        print(f"❌ Stage directory not found: {stage_path}")
+        print(f"[ERROR] Stage directory not found: {stage_path}")
         available_stages = [d.name for d in run_path.iterdir() if d.is_dir() and d.name.startswith(('01', '02', '03', '04', '05'))]
         print(f"Available stages: {available_stages}")
         return
     
-    print(f"🔍 Quick QA Check - {run_path.name}")
+    print(f"[INFO] Quick QA Check - {run_path.name}")
     print(f"📁 Stage: {stage}")
     
     # Load current stage data
@@ -280,7 +280,7 @@ def quick_qa_check(run_dir: str, stage: str, compare_with: Optional[str] = None)
     
     # Quick recommendations
     if current_data:
-        print("\n💡 Quick Recommendations:")
+        print("\n[TIP] Quick Recommendations:")
         
         # Calculate overall metrics for recommendations
         total_chars = sum(analyze_blocks(pd['blocks'])['total_chars'] for pd in current_data.values())
@@ -304,8 +304,8 @@ def quick_qa_check(run_dir: str, stage: str, compare_with: Optional[str] = None)
             elif char_loss < -10:
                 print("   ⚠️  Moderate content loss (>10%) - monitor closely")
     
-    print(f"\n✅ Quick QA check completed for {stage}")
-    print(f"💡 For detailed analysis, run: python qa_pipeline_evaluator.py --run-dir {run_dir}")
+    print(f"\n[SUCCESS] Quick QA check completed for {stage}")
+    print(f"[TIP] For detailed analysis, run: python qa_pipeline_evaluator.py --run-dir {run_dir}")
 
 def main():
     parser = argparse.ArgumentParser(description="Quick QA check after each pipeline stage")

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Medical OCR Pipeline - Virtual Environment Activation Script
 
-echo "🔧 Medical OCR Pipeline - Virtual Environment Setup"
+echo "[ISSUE] Medical OCR Pipeline - Virtual Environment Setup"
 echo "=================================================="
 
 # Check if virtual environment exists
@@ -11,11 +11,11 @@ if [ ! -d "venv" ]; then
 fi
 
 # Activate virtual environment
-echo "⚡ Activating virtual environment..."
+echo "[FAST] Activating virtual environment..."
 source venv/bin/activate
 
 # Verify activation
-echo "✅ Virtual environment activated:"
+echo "[SUCCESS] Virtual environment activated:"
 echo "   Python: $(which python)"
 echo "   Version: $(python --version)"
 
@@ -28,7 +28,7 @@ if [ ! -f "venv/requirements_installed.txt" ]; then
 fi
 
 echo ""
-echo "🚀 Ready for development!"
+echo "[LAUNCH] Ready for development!"
 echo "   Run: docker-compose up --profile lightweight"
 echo "   Or:  docker-compose up --profile full"
 echo ""
