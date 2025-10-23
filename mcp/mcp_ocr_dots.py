@@ -1,10 +1,13 @@
-# mcp_ocr_dots.py
-# MCP-compatible OCR server using FastAPI + dots.ocr.
-# Advanced 3B OCR model from Rednote-HiLab with excellent text recognition capabilities.
+# mcp_ocr_dots_new.py
+# MCP-compatible OCR server using FastAPI + dots.ocr (proper implementation)
+# Advanced 3B OCR model from Rednote-HiLab following official documentation
+
 import io
 import os
+import sys
 import json
 import time
+import tempfile
 import traceback
 from typing import List, Dict, Any
 from fastapi import FastAPI, UploadFile, Form
@@ -17,90 +20,257 @@ app = FastAPI(title="MCP OCR - dots.ocr", version="1.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 # Global lazy init
-_MODEL = None
-_PROCESSOR = None
+_PARSER = None
 
-def get_model():
-    """Initialize dots.ocr model (lazy loading)."""
-    global _MODEL, _PROCESSOR
-    if _MODEL is None:
+def get_parser():
+    """Initialize dots.ocr parser (lazy loading)."""
+    global _PARSER
+    if _PARSER is None:
         try:
-            import torch
-            from transformers import AutoModelForImageTextToText, AutoProcessor
+            # Try importing from the official Docker image environment
+            try:
+                from dots_ocr.parser import DotsOCRParser
+                print("[INFO] Found dots_ocr.parser in official image")
+            except ImportError:
+                # Try alternative paths that might be in the official image
+                import sys
+                possible_paths = ["/app", "/workspace", "/opt/dots_ocr", "/usr/local/lib/python3.12/site-packages"]
+                for path in possible_paths:
+                    if path not in sys.path:
+                        sys.path.append(path)
+                        print(f"[DEBUG] Added {path} to Python path")
+                
+                from dots_ocr.parser import DotsOCRParser
+                print("[INFO] Found dots_ocr.parser after path adjustment")
             
-            model_path = os.getenv("DOTS_MODEL", "rednote-hilab/dots.ocr")
+            print("[INFO] Initializing DotsOCR parser (HuggingFace backend)...")
+            # Use HuggingFace backend for better compatibility
+            _PARSER = DotsOCRParser(use_hf=True)
+            print("[INFO] DotsOCR parser loaded successfully")
             
-            print(f"[INFO] Loading dots.ocr model: {model_path}")
-            _PROCESSOR = AutoProcessor.from_pretrained(model_path, trust_remote_code=True)
-            _MODEL = AutoModelForImageTextToText.from_pretrained(
-                model_path, 
-                trust_remote_code=True,
-                torch_dtype=torch.bfloat16,
-                device_map="auto"
-            ).eval()
-            
-            print("[INFO] dots.ocr model loaded successfully")
         except Exception as e:
-            print(f"[ERROR] Failed to load dots.ocr model: {e}")
-            raise e
+            print(f"[ERROR] Failed to load DotsOCR parser: {e}")
+            print(f"[ERROR] Traceback: {traceback.format_exc()}")
+            
+            # Try to see what's available in the environment
+            try:
+                import os
+                print(f"[DEBUG] Current working directory: {os.getcwd()}")
+                print(f"[DEBUG] Python path: {sys.path}")
+                print(f"[DEBUG] Environment variables: {dict(os.environ)}")
+            except:
+                pass
+            
+            # Set fallback flag
+            _PARSER = "fallback"
     
-    return _MODEL, _PROCESSOR
+    return _PARSER
 
-def parse_dots_output(response_text: str, img_w: int, img_h: int) -> List[Dict[str, Any]]:
-    """Parse dots.ocr output into standard blocks format."""
+def perform_dots_ocr(image: Image.Image) -> List[Dict[str, Any]]:
+    """Perform OCR using DotsOCR parser."""
+    try:
+        parser = get_parser()
+        
+        if parser == "fallback":
+            # Return empty if DotsOCR is not available
+            print("[WARN] DotsOCR not available, returning empty results")
+            return []
+        
+        # Save image temporarily for parser
+        with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp_file:
+            image.save(tmp_file.name, 'PNG')
+            tmp_path = tmp_file.name
+        
+        try:
+            print(f"[INFO] Running DotsOCR on {tmp_path}")
+            # Use layout detection + OCR (recommended)
+            result = parser.parse(tmp_path, prompt="prompt_layout_all_en")
+            print(f"[INFO] DotsOCR result type: {type(result)}")
+            
+            # Clean up temp file
+            os.unlink(tmp_path)
+            
+            return parse_dots_result(result, image.width, image.height)
+            
+        except Exception as e:
+            # Clean up temp file on error
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+            raise e
+            
+    except Exception as e:
+        print(f"[ERROR] DotsOCR failed: {e}")
+        print("[INFO] Use dedicated Tesseract service at port 8089 for basic OCR")
+        return []
+
+def parse_dots_result(result: Any, img_w: int, img_h: int) -> List[Dict[str, Any]]:
+    """Parse DotsOCR result into standard blocks format."""
     blocks = []
     
     try:
-        # dots.ocr returns structured text, split by lines
-        lines = response_text.strip().split('\n')
+        print(f"[DEBUG] Parsing DotsOCR result: {type(result)}")
         
-        for i, line in enumerate(lines):
-            line = line.strip()
-            if not line:
-                continue
-            
-            # Create block for each line
-            block = {
-                "id": f"dots_block_{i+1}",
-                "bbox": [0, i * 25, img_w, (i + 1) * 25],  # Estimated positioning
-                "polygon": [[0, i * 25], [img_w, i * 25], [img_w, (i + 1) * 25], [0, (i + 1) * 25]],
-                "text": line,
-                "confidence": 0.97,  # dots.ocr typically has very high confidence
-                "type": "text",
-                "properties": {
-                    "font_size": 11,
-                    "reading_order": i + 1,
-                    "engine": "dots.ocr"
+        # DotsOCR returns various formats depending on the prompt
+        if isinstance(result, str):
+            # Plain text output
+            lines = [line.strip() for line in result.strip().split('\n') if line.strip()]
+            for i, line in enumerate(lines):
+                block = {
+                    "id": f"dots_block_{i + 1}",
+                    "bbox": [0, i * 25, img_w, (i + 1) * 25],
+                    "polygon": [[0, i * 25], [img_w, i * 25], [img_w, (i + 1) * 25], [0, i * 25]],
+                    "text": line,
+                    "confidence": 0.95,
+                    "type": "text",
+                    "properties": {
+                        "font_size": 11,
+                        "reading_order": i + 1,
+                        "engine": "dots.ocr"
+                    }
                 }
-            }
-            blocks.append(block)
+                blocks.append(block)
+        
+        elif isinstance(result, dict):
+            # Structured output with layout info
+            if 'blocks' in result:
+                for i, block_data in enumerate(result['blocks']):
+                    if 'text' in block_data and block_data['text'].strip():
+                        text = block_data['text'].strip()
+                        bbox = block_data.get('bbox', [0, 0, img_w, img_h])
+                        
+                        block = {
+                            "id": f"dots_block_{i + 1}",
+                            "bbox": bbox,
+                            "polygon": [
+                                [bbox[0], bbox[1]], 
+                                [bbox[2], bbox[1]], 
+                                [bbox[2], bbox[3]], 
+                                [bbox[0], bbox[3]]
+                            ],
+                            "text": text,
+                            "confidence": block_data.get('confidence', 0.95),
+                            "type": block_data.get('type', 'text'),
+                            "properties": {
+                                "font_size": block_data.get('font_size', 11),
+                                "reading_order": i + 1,
+                                "engine": "dots.ocr"
+                            }
+                        }
+                        blocks.append(block)
+            
+            elif 'text' in result:
+                # Single text block
+                text = result['text'].strip()
+                if text:
+                    block = {
+                        "id": "dots_block_1",
+                        "bbox": [0, 0, img_w, img_h],
+                        "polygon": [[0, 0], [img_w, 0], [img_w, img_h], [0, img_h]],
+                        "text": text,
+                        "confidence": result.get('confidence', 0.95),
+                        "type": "text",
+                        "properties": {"font_size": 11, "reading_order": 1, "engine": "dots.ocr"}
+                    }
+                    blocks.append(block)
+        
+        elif isinstance(result, list):
+            # List of text blocks
+            for i, item in enumerate(result):
+                if isinstance(item, str) and item.strip():
+                    block = {
+                        "id": f"dots_block_{i + 1}",
+                        "bbox": [0, i * 25, img_w, (i + 1) * 25],
+                        "polygon": [[0, i * 25], [img_w, i * 25], [img_w, (i + 1) * 25], [0, i * 25]],
+                        "text": item.strip(),
+                        "confidence": 0.95,
+                        "type": "text",
+                        "properties": {
+                            "font_size": 11,
+                            "reading_order": i + 1,
+                            "engine": "dots.ocr"
+                        }
+                    }
+                    blocks.append(block)
+                elif isinstance(item, dict) and 'text' in item:
+                    text = item['text'].strip()
+                    if text:
+                        bbox = item.get('bbox', [0, i * 25, img_w, (i + 1) * 25])
+                        block = {
+                            "id": f"dots_block_{i + 1}",
+                            "bbox": bbox,
+                            "polygon": [
+                                [bbox[0], bbox[1]], 
+                                [bbox[2], bbox[1]], 
+                                [bbox[2], bbox[3]], 
+                                [bbox[0], bbox[3]]
+                            ],
+                            "text": text,
+                            "confidence": item.get('confidence', 0.95),
+                            "type": item.get('type', 'text'),
+                            "properties": {
+                                "font_size": item.get('font_size', 11),
+                                "reading_order": i + 1,
+                                "engine": "dots.ocr"
+                            }
+                        }
+                        blocks.append(block)
     
     except Exception as e:
-        print(f"[WARN] Failed to parse dots.ocr output: {e}")
-        # Fallback: treat entire response as single block
-        blocks = [{
-            "id": "dots_block_1",
-            "bbox": [0, 0, img_w, img_h],
-            "polygon": [[0, 0], [img_w, 0], [img_w, img_h], [0, img_h]],
-            "text": response_text.strip(),
-            "confidence": 0.97,
-            "type": "text",
-            "properties": {"font_size": 11, "reading_order": 1, "engine": "dots.ocr"}
-        }]
+        print(f"[ERROR] Failed to parse DotsOCR result: {e}")
+        print(f"[DEBUG] Result was: {result}")
+        # Return empty on parse error
+        blocks = []
     
     return blocks
 
 @app.get("/health")
 async def health():
     """Health check endpoint."""
-    return {"status": "healthy", "service": "MCP OCR - dots.ocr"}
+    parser = get_parser()
+    if parser == "fallback":
+        return JSONResponse(
+            status_code=503,
+            content={
+                "ok": False,
+                "engine": "dots.ocr", 
+                "version": "latest",
+                "status": "unavailable",
+                "message": "DotsOCR model not loaded, use Tesseract service at port 8089"
+            }
+        )
+    
+    return {
+        "ok": True,
+        "engine": "dots.ocr", 
+        "version": "latest",
+        "status": "ready",
+        "enhanced_processing": True
+    }
 
 @app.get("/warmup")
 async def warmup():
     """Warmup the model to reduce cold start latency."""
     try:
-        model, processor = get_model()
-        return {"status": "warmed up", "model": "dots.ocr"}
+        parser = get_parser()
+        if parser == "fallback":
+            return JSONResponse(
+                status_code=503,
+                content={
+                    "status": "unavailable", 
+                    "engine": "dots.ocr",
+                    "message": "DotsOCR model not available"
+                }
+            )
+        
+        # Test with a small dummy image
+        dummy_img = Image.new('RGB', (100, 50), color='white')
+        blocks = perform_dots_ocr(dummy_img)
+        
+        return {
+            "status": "warmed up", 
+            "engine": "dots.ocr",
+            "test_blocks": len(blocks)
+        }
     except Exception as e:
         return JSONResponse(
             status_code=500,
@@ -119,147 +289,86 @@ async def ocr_endpoint(
     
     Args:
         file: Uploaded image file
-        extract_type: Type of extraction ("text", "blocks", "layout")
-        confidence_threshold: Minimum confidence for text detection
-        language: Language code (dots.ocr supports many languages)
+        extract_type: Type of extraction (text, layout, etc.)
+        confidence_threshold: Minimum confidence for text blocks
+        language: Language hint (en, es, fr, etc.)
     
     Returns:
-        JSON response with detected text blocks in standard format
+        JSON response with extracted text blocks
     """
-    start_time = time.time()
-    
     try:
-        # Read and validate image
-        image_bytes = await file.read()
-        image = Image.open(io.BytesIO(image_bytes))
+        # Read and process image
+        image_data = await file.read()
+        image = Image.open(io.BytesIO(image_data))
         
-        if image.mode != 'RGB':
+        # Convert to RGB if necessary
+        if image.mode not in ('RGB', 'L'):
             image = image.convert('RGB')
         
-        img_w, img_h = image.size
+        print(f"[INFO] Processing image: {image.size} ({image.mode})")
         
-        # Get model
-        model, processor = get_model()
-        
-        # Process image with dots.ocr
-        import torch
-        
-        # dots.ocr uses a simple image-to-text approach
-        inputs = processor(images=image, return_tensors="pt").to(model.device)
-        
-        # Generate response
-        with torch.no_grad():
-            generated_ids = model.generate(
-                **inputs,
-                max_new_tokens=1024,
-                do_sample=False,
-                temperature=0.0,
-                pad_token_id=processor.tokenizer.eos_token_id
-            )
-        
-        # Decode response
-        response_text = processor.decode(generated_ids[0], skip_special_tokens=True)
-        
-        # Parse response into blocks
-        blocks = parse_dots_output(response_text, img_w, img_h)
-        
-        # Filter by confidence
-        filtered_blocks = [b for b in blocks if b.get("confidence", 0) >= confidence_threshold]
-        
+        # Perform OCR
+        start_time = time.time()
+        blocks = perform_dots_ocr(image)
         processing_time = time.time() - start_time
         
+        # Filter by confidence threshold
+        filtered_blocks = [
+            block for block in blocks 
+            if block['confidence'] >= confidence_threshold
+        ]
+        
         return {
-            "success": True,
-            "data": {
-                "blocks": filtered_blocks,
-                "image_info": {
-                    "width": img_w,
-                    "height": img_h,
-                    "channels": len(image.getbands())
-                },
-                "processing_info": {
-                    "engine": "dots.ocr",
-                    "version": "1.0.0",
-                    "processing_time": round(processing_time, 3),
-                    "total_blocks": len(filtered_blocks),
-                    "language": language,
-                    "confidence_threshold": confidence_threshold
-                }
-            }
+            "blocks": filtered_blocks,
+            "engine": "dots.ocr",
+            "processing_time": round(processing_time, 2),
+            "image_info": {
+                "width": image.width,
+                "height": image.height,
+                "mode": image.mode
+            },
+            "total_blocks": len(filtered_blocks),
+            "confidence_threshold": confidence_threshold
         }
         
     except Exception as e:
-        processing_time = time.time() - start_time
-        error_msg = f"dots.ocr processing failed: {str(e)}"
-        print(f"[ERROR] {error_msg}")
-        print(f"[ERROR] Traceback: {traceback.format_exc()}")
-        
+        import traceback
         return JSONResponse(
-            status_code=500,
-            content={
-                "success": False,
-                "error": error_msg,
-                "processing_time": round(processing_time, 3)
-            }
+            {"blocks": [], "engine": "dots.ocr", "error": str(e), "traceback": traceback.format_exc()},
+            status_code=500
         )
 
-@app.get("/")
-async def root():
-    """Root endpoint with service information."""
-    return {
-        "service": "MCP OCR - dots.ocr",
-        "version": "1.0.0",
-        "description": "Advanced OCR using Rednote-HiLab's dots.ocr 3B model",
-        "endpoints": {
-            "/health": "Health check",
-            "/warmup": "Model warmup",
-            "/ocr": "OCR processing (POST with file upload)",
-            "/": "This information"
-        },
-        "model_info": {
-            "name": "dots.ocr",
-            "size": "3B parameters",
-            "provider": "Rednote-HiLab",
-            "languages": "Multi-language support",
-            "specialties": ["Text recognition", "Document parsing", "High accuracy OCR"]
-        }
-    }
-
-# MCP Integration (optional)
+# Optional MCP mount
 try:
     from fastmcp import FastMCP
-    
-    mcp = FastMCP("dots.ocr OCR Service")
-    
-    @mcp.tool()
-    def extract_text_dots(image_path: str) -> str:
-        """Extract text from image using dots.ocr model."""
-        try:
-            import requests
-            
-            with open(image_path, 'rb') as f:
-                files = {'file': f}
-                response = requests.post('http://localhost:8101/ocr', files=files)
-                
-            if response.status_code == 200:
-                result = response.json()
-                if result.get('success'):
-                    blocks = result['data']['blocks']
-                    return '\n'.join([block['text'] for block in blocks])
-                else:
-                    return f"Error: {result.get('error', 'Unknown error')}"
-            else:
-                return f"HTTP Error: {response.status_code}"
-                
-        except Exception as e:
-            return f"Error extracting text: {str(e)}"
-    
-    app.mount("/mcp", mcp.app)
-    print("[INFO] MCP integration enabled at /mcp")
-    
-except ImportError:
-    print("[INFO] FastMCP not available, skipping MCP integration")
+    mcp = FastMCP.from_fastapi(app)
+    app.mount("/mcp", mcp.http_app(path="/mcp"))
+    print("[INFO] MCP mounted at /mcp (dots.ocr)")
+except Exception as e:
+    print(f"[WARN] MCP not enabled for dots.ocr: {e}")
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", "8101"))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    import os
+    host = os.getenv("HOST", "0.0.0.0")
+    port = int(os.getenv("PORT", "8000"))
+    print(f"[INFO] Starting DotsOCR server on {host}:{port}")
+    print("[INFO] Advanced 3B OCR with layout detection")
+    
+    # Optional warmup on start
+    if os.getenv("DOTS_WARMUP_ON_START", "0") == "1":
+        try:
+            import requests
+            from threading import Thread
+            def _bg_warm():
+                import time
+                time.sleep(10)  # Wait for server to start
+                try:
+                    requests.get(f"http://{host}:{port}/warmup", timeout=60)
+                    print("[WARMUP] DotsOCR warmup completed")
+                except Exception as e:
+                    print(f"[WARMUP] Failed: {e}")
+            Thread(target=_bg_warm, daemon=True).start()
+        except Exception as e:
+            print(f"[WARMUP] not scheduled: {e}")
+    
+    uvicorn.run(app, host=host, port=port)
